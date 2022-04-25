@@ -1,4 +1,4 @@
-# Theory Statistics 
+# Theoretical Statistics I 
 ### 2020 1학기, 이론통계학 I
 
 <br>
