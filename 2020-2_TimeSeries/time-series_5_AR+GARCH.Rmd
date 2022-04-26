@@ -1,0 +1,118 @@
+---
+title: "TS_hw5"
+author: "202STG01 고유정"
+date: '2020 11 22 '
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+data <- read.csv("C:/Users/yjk9/Documents/R/시계열/HW5/Won_Dollar_P_RV_r_2006_2012.csv")
+head(data)
+library(ggplot2)
+plot(data$P, type="l")
+plot(data$r, type="l")
+library(forecast)
+library(fUnitRoots)
+library(tseries)
+library(tidyr)
+library(lubridate)
+library(tidyverse)
+library(fGarch)
+library(rugarch)
+plot(data$RV, type="l")
+
+#1 RV 에 대해 AR(p) 모형  을 추정시오 단 모형 차수 p 는 
+   #1 과 10 사이 BIC를 최소로 하는 값으로 로 정한다.
+
+r.ar.aic=c(); r.ar.bic=c(); rv.ar.aic=c(); rv.ar.bic=c(); p.ar.aic=c(); p.ar.bic=c();
+for(p in 0:9){
+  r.ar.fit = Arima(data$r, order = c(p,0,0))
+  r.ar.bic[p+1] =r.ar.fit$bic
+  
+  rv.ar.fit = Arima(data$RV, order = c(p,0,0))
+  rv.ar.bic[p+1] = rv.ar.fit$bic
+  
+  p.ar.fit = Arima((data$P), order = c(p,0,0))
+  p.ar.bic[p+1] = p.ar.fit$bic
+}
+
+plot(0:9,r.ar.bic, type='b', xlab='p',ylab='BIC')
+abline(v = which.min(r.ar.bic)-1, lty=2, col='red')
+
+plot(0:9, rv.ar.bic, type='b', xlab='p',ylab='BIC')
+abline(v = which.min(rv.ar.bic)-1, lty=2, col='red')
+
+plot(0:9, p.ar.bic, type='b', xlab='p',ylab='BIC')
+abline(v = which.min(p.ar.bic)-1, lty=2, col='red')
+
+bic = c()
+for(p in 1:10){
+  ar.fit = Arima(data$RV, order = c(p,0,0))
+  bic[p] = ar.fit$bic}
+which.min(bic)
+plot(1:10, bic, type="b", xlab="p", ylab="BIC")
+abline(v = which.min(bic), lty=2, col="red")
+
+adfTest(data$RV, type = "c", lags = 1)
+
+ar.0 = lm(data$r ~ 1)
+ar.0
+a.0 = ar.0$residual
+plot(a.0, type="l")
+
+ar.6 = Arima(data$RV, order=c(6,0,0))
+a.6=ar.6$residual
+plot(a.6, type="l")
+
+acf(a.6, 25, main = "Series a.6")
+pacf(a.6, 25, main = "Series a.6")
+a.6
+
+acf((a.6)^2, main = "Series a.6^2")
+pacf((a.6)^2, main = "Series a.6^2")
+
+sigma=c();epsilon=c();a=c(); n = 1000;set.seed(1); epsilon=rnorm(n);
+alpha_0=0.01; alpha_1=0.1; beta_1=0.89
+sigma[1]=sqrt(alpha_0/(1-alpha_1-beta_1)) #uncond. variance
+a[1] = sigma[1]*epsilon[1]
+for (t in 2:n){
+  sigma[t]= sqrt(alpha_0 + alpha_1*(a[t-1])^2+beta_1*(sigma[t-1])^2);
+  a[t]=sigma[t]*epsilon[t]}
+
+
+lm.fit = lm(a.6 ~ 1 )
+garchFit(~garch(1,1), lm.fit$residuals, include.mean=F)
+
+#RV_garchfit = garchFit(~garch(1,1), data$RV, include.mean=F)
+spec.garch=ugarchspec(variance.model=list(model='sGARCH', garchOrder=c(1,1)),
+                      mean.model=list(armaOrder=c(0,0), include.mean=F), distribution.model='std')
+
+a <- data$r - mean(data$r)
+garch.fit=ugarchfit(a, spec=spec.garch)
+garch.fit
+
+ahead <- ugarchforecast(garch.fit,n.ahead=1)@forecast$sigmaFor
+ahead
+
+spec.egarcht=ugarchspec(variance.model=list(model='eGARCH', garchOrder=c(1,1)), 
+                      mean.model=list(armaOrder=c(0,0), include.mean=F), distribution.model='norm')
+egarch.fit=ugarchfit(a, spec=spec.egarcht)
+egarch.fit
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

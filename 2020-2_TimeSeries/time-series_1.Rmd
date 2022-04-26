@@ -1,0 +1,71 @@
+---
+title: "HW1"
+author: "202STG01 고유정"
+date: '2020 9 20 '
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+# 1
+
+data <- read.csv("대미환율.csv")
+return <- diff(log(data$Pt)) # return 데이터 만들기
+mean(return) # return 평균
+var(return)   # return 분산
+
+data1 <- merge( data, return)   # 시도표
+
+acf(return, 25, main = "ACF") # ACF 
+pacf(return, 25, main = "PACF") # PACF
+
+
+# 2 
+
+set.seed(1); n=500;
+phi=0.8
+a = rnorm(n)
+y=c()
+y[1]=0
+for (t in 2:n) {
+  y[t] = phi * y[t-1] + a[t] }
+
+mean(y)
+var(y)
+
+set.seed(1); n=500; M=200;
+rho.1=c(); phi=0.0
+for (i in 1:M) {
+  a = rnorm(n)
+  y=c()
+  y[1]=0
+  for (t in 2:n) {
+    y[t] = phi * y[t-1] + a[t] }
+  rho.1[i]=acf(y, plot=FALSE)$acf[2]
+  #rho^_1
+}
+plot(rho.1, type = "o")
+mean(rho.1);sd(rho.1)
+phi=0.8
+mean(rho.1)
+sd(rho.1)
+rho.1[1]
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
