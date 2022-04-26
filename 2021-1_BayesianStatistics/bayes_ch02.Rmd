@@ -1,0 +1,121 @@
+---
+title: "HW1"
+author: "202STG01 고유정"
+date: '2021 3 15 '
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+## 표본생성 ##
+
+theta=c(1:5)
+prob=c(1,3,8,5,3)/20
+
+prob.ratio = function(theta1, theta2, theta, prob) {
+  ind1 = which(theta == theta1)
+  ind2 = which(theta == theta2)
+  return(prob[ind1]/prob[ind2])
+}
+
+N=50000
+theta.curr=2
+theta.Samples=c(1:N)*0
+theta.Samples[1]=theta.curr
+
+
+
+## 방법1 ##
+# Start Simulation #
+for( iter in 1:(N-1)){
+  theta.prop = ifelse(runif(1)<0.5, theta.curr+1, theta.curr-1)
+  if (theta.prop<1 || theta.prop>5) theta.prop = theta.curr
+  theta.prop = round(theta.prop,0)
+  alpha.star = prob.ratio(theta.prop, theta.curr, theta, prob)
+  alpha = min(1, alpha.star)
+  theta.next = ifelse(runif(1)<alpha, theta.prop, theta.curr)
+  theta.Samples[iter+1]=theta.next
+  theta.curr=theta.next
+}
+
+# End Simulation #
+
+# Graphs #
+par(mfrow=c(1,1))
+Ntrace = 100
+plot(theta.Samples[1:Ntrace], type="l", xlab="iteration", ylab="theta")
+points(c(1:Ntrace), theta.Samples[1:Ntrace], pch=19, col="blue")
+
+par(mfrow=c(1,2))
+barplot(prob,names.arg=theta, xlab="theta", ylab="prob", col="skyblue", sub="(a) true probability")
+aa=table(theta.Samples[501:N])/sum(table(theta.Samples[501:N]))
+barplot(aa, names.arg=theta, xlab="theta", ylab="prob", ylim=c(0,0.4), col="skyblue",
+        sub="(b) relative frequency of samples")
+
+
+
+## 방법2 ##
+# Start Simulation #
+for( iter in 1:(N-1)){
+  theta.prop = sample(theta,1)
+  theta.prop = round(theta.prop,0)
+  alpha.star = prob.ratio(theta.prop, theta.curr, theta, prob)
+  alpha = min(1, alpha.star)
+  theta.next = ifelse(runif(1)<alpha, theta.prop, theta.curr)
+  theta.Samples[iter+1]=theta.next
+  theta.curr=theta.next
+}
+
+# End Simulation #
+
+# Graphs #
+par(mfrow=c(1,1))
+Ntrace = 100
+plot(theta.Samples[1:Ntrace], type="l", xlab="iteration", ylab="theta")
+points(c(1:Ntrace), theta.Samples[1:Ntrace], pch=19, col="blue")
+
+par(mfrow=c(1,2))
+barplot(prob,names.arg=theta, xlab="theta", ylab="prob", col="skyblue", sub="(a) true probability")
+aa=table(theta.Samples[501:N])/sum(table(theta.Samples[501:N]))
+barplot(aa, names.arg=theta, xlab="theta", ylab="prob", ylim=c(0,0.4), col="skyblue",
+        sub="(b) relative frequency of samples")
+
+
+
+## 방법3 ##
+# Start Simulation #
+prob.prop=c(0.1, 0.1, 0.2, 0.3, 0.3)
+for( iter in 1:(N-1)){
+  theta.prop = sample(theta,1,prob=prob.prop)
+  alpha.star = prob.ratio(theta.prop,theta.curr,theta,prob)*prob.ratio(theta.curr,theta.prop,theta,prob.prop)
+  alpha = min(1, alpha.star)
+  theta.next = ifelse(runif(1)<alpha, theta.prop, theta.curr)
+  theta.Samples[iter+1]=theta.next
+  theta.curr=theta.next
+}
+
+# End Simulation #
+
+# Graphs #
+par(mfrow=c(1,1))
+Ntrace = 100
+plot(theta.Samples[1:Ntrace], type="l", xlab="iteration", ylab="theta")
+points(c(1:Ntrace), theta.Samples[1:Ntrace], pch=19, col="blue")
+
+par(mfrow=c(1,2))
+barplot(prob,names.arg=theta, xlab="theta", ylab="prob", col="skyblue", sub="(a) true probability")
+aa=table(theta.Samples[501:N])/sum(table(theta.Samples[501:N]))
+barplot(aa, names.arg=theta, xlab="theta", ylab="prob", ylim=c(0,0.4), col="skyblue",
+        sub="(b) relative frequency of samples")
+
+
+```
