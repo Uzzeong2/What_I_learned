@@ -1,0 +1,526 @@
+---
+title: "total rmd"
+author: "202STG01 고유정"
+date: '2021 6 14 '
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(1234)
+library(tictoc);library(coda);library(rjags);library(runjags);library(fda)
+
+param_beta =c(-3.5,1,2)
+phi = 0.95
+sig = 0.5
+I=5000
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+#===========number 1================
+RMSE = c()
+RMSE_fin = c()
+per = 5000
+
+param_beta =c(-3.5,1,2)
+phi = 0.95
+sig = 0.5
+nn=5000
+B=2
+tic("total")
+for (b in 1:B){
+  
+  X_real = matrix(0, nrow=5000, ncol=3)
+  for(i in 1:5000){
+    X_real[i,1]<-1
+    X_real[i,2]<-rbinom(1,1,0.5)
+    X_real[i,3]<-rbinom(1,1,0.5)
+  }
+  lamb_real = exp(X_real %*% param_beta)
+  R = matrix(0,nrow=5000, ncol=7) 
+  Y_real = matrix(0,nrow=5000, ncol=6) 
+  for (i in 1:5000){
+    R[i,1]= rnorm(1,0, sqrt(sig/(1-phi^2)))
+    for (t in 2:7){
+      R[i,t] = rnorm(1,phi*R[i,t-1], sqrt(sig))
+    }
+  }
+  
+  for(i in 1:5000){
+    Y_real[i,] = rpois(6,lamb_real[i]*exp(R[i,2:7]) )
+  }
+
+  
+  #}
+  
+  
+  ### jags ###
+  # datalist
+  dataList=list(N=Y_real,X=X_real,I=5000,beta=param_beta,sig=sig,phi=phi)
+  
+  # model
+  modelString="model {
+
+######################
+# Start of Prior for R
+for(i in 1:I){
+    R[i,1] ~ dnorm(0, (1-phi^2)/sig)
+    
+    for(t in 2:7){ 
+        R[i,t] ~ dnorm(phi*R[i,t-1], 1/sig)
+    }
+    return_hidden_1[i] = R[i,7] #save R_6
+}
+# End of Prior for R
+######################
+
+##########################
+# Start of Likelihood Part 
+for(i in 1:I){ #I: number of people
+    for(t in 1:6){
+        mu_N[i,t] = exp( inprod(X[i,],beta[]) + R[i,t+1] )
+        N[i,t] ~ dpois( mu_N[i,t] )
+    }
+}
+# End of Likelihood Part
+##########################
+}
+"
+model <- jags.model(textConnection(modelString), data =dataList, n.chains = 3, n.adapt = 1000)
+
+update(model, 100)
+
+mcmc.samples.R <- coda.samples(model, variable.names = c("return_hidden_1"), n.iter = 1000, thin=10)
+
+Rhat6 <- colMeans(exp(mcmc.samples.R[[3]]))
+prem = lamb_real*Rhat6
+
+
+RMSE_fin[b] = sqrt(mean((prem - Y_real[,6])^2))
+RMSE_fin[b]
+RMSE_fin_cum = mean(RMSE_fin)
+
+print("RMSE_fin")
+print(RMSE_fin[b])
+print("RMSE_fin_cum")
+print(RMSE_fin_cum)
+}
+
+RMSE_fin_cum
+```
+
+```{r}
+# ======== Problem2 ========
+###### Simple LSMC ######
+
+###### Step1. Sampling with JAGS ######
+## # of data = 5000
+
+ptm1 <- proc.time() # time start
+
+I = 5000
+X = matrix(0, nrow=I, ncol=2)
+for (i in 1:I){
+  X[i,1] = rbinom(1, 1, 0.5) # independent
+  X[i,2] = rbinom(1, 1, 0.5)
+}
+X <- cbind(rep(1, I), X)
+
+## Scenario2
+beta = c(-3.5, 1, 2)
+phi = 0.95
+sigsq = 0.5
+lambda = exp(X %*% beta)
+R = matrix(0, nrow=I, ncol=7)
+Y = matrix(0, nrow=I, ncol=6)
+for (i in 1:I){
+  R[i,1] = rnorm(1, 0, sqrt(sigsq/(1-phi^2)))
+  for (t in 1:6){
+    R[i,(t+1)] = rnorm(1, phi*R[i,t], sqrt(sigsq))
+  }
+  Y[i,] = rpois(6,lambda[i]*exp(R[i,c(2:7)]))
+}
+
+## datalist
+dataList=list(lambda=lambda, I=I, sigsq=sigsq, phi=phi # hyperparameter
+)
+
+## model
+modelString="model {
+
+  ######## Prior ########
+  for(i in 1:I){
+      R[i,1] ~ dnorm(0, (1-phi^2)/sigsq)
+      for(t in 2:7){ # R_{0}, ..., R_{6}
+          R[i,t] ~ dnorm(phi*R[i,t-1], 1/sigsq)
+          R_star[i,t] = exp(R[i,t])
+      }
+  }
+  
+  ######## Y ########
+  for (i in 1:I){
+    for (t in 1:6){
+      mu_Y[i,t] = lambda[i,] * R_star[i,(t+1)]
+      Y[i,t] ~ dpois(mu_Y[i,t])
+    }
+  }
+  }
+  "
+writeLines(modelString, 'model_ex4.txt')
+
+## run jags
+jagsModel = jags.model(file='model_ex4.txt', data=dataList, 
+                       n.chains=1, n.adapt=500
+)
+
+update(jagsModel, n.iter=5000)
+codasamples = coda.samples(jagsModel, # K = 100 (n.iter)
+                           variable.names=c('Y', 'R_star'), n.iter=100)
+data = colMeans(codasamples[[1]])
+pred_R = matrix(unname(data[1:30000]), nrow=I, ncol=6)
+pred_Y = matrix(unname(data[30001:length(data)]), nrow=I, ncol=6)
+proc.time() - ptm1
+
+###### Step2. Weighted LM ######
+
+ptm2 <- proc.time() # time start 
+B = 5
+res2 = rep(0, B)
+
+for (b in 1:B){
+  ## Bootstrap sampling 
+  K = 100000 
+  idx = sample(seq(1,I), K, replace=T)
+  
+  X_boot = matrix(rep(0, K*3), nrow=K)
+  for (i in 1:K){
+    idxx = idx[i]
+    X_boot[i,] = as.matrix(X[idxx,])
+  }
+  
+  lambda_boot = exp(X_boot %*% beta)
+  R_boot = matrix(0, nrow=K, ncol=7)
+  Y_boot = matrix(0, nrow=K, ncol=6)
+  for (i in 1:K){
+    R_boot[i,1] = rnorm(1, 0, sqrt(sigsq/(1-phi^2)))
+    for (t in 1:5){
+      R_boot[i,(t+1)] = rnorm(1, phi*R_boot[i,t], sqrt(sigsq))
+    }
+    Y_boot[i,] = rpois(6,lambda_boot[i]*exp(R_boot[i,c(2:7)]))
+  }
+  
+  wdata = matrix(0, nrow=K, ncol=6)
+  for (k in 1:K){
+    wdata[k,] = as.matrix(Y_boot[k,])
+  }
+  wdata = data.frame(wdata)
+  colnames(wdata) = paste0('predY', seq(1,6))
+  
+  ## Weighted Least Squares
+  res_lm = lm(predY6~., data=wdata, weight=lambda_boot)
+  AA = as.matrix(unname(res_lm$coefficients))
+  
+  premium2 = rep(0, I)
+  for (i in 1:I){
+    premium2[i] = lambda[i,] * t(AA) %*% (pred_Y[i,] / lambda[i,]) 
+  }
+  res2[b] = sqrt(mean((premium2 - pred_Y[,6])^2))
+}
+
+proc.time() - ptm2 # time end 
+
+rmse2 = mean(res2)
+rmse2
+```
+
+
+
+```{r}
+### problem 4 ######
+param_beta =c(-3.5,1,2)
+phi = 0.95
+sig = 0.5
+I=5000
+# Population Assumption
+
+case_A = cumsum(rep(1000,5))
+case_B = c(); case_C = c()
+for(i in 1:5){
+  case_B[i] = as.integer(round(i*1000/3,0))
+  case_C[i] = as.integer(round((6-i)*1000/3,0))
+}
+case_B = cumsum(case_B)
+case_C = cumsum(case_C)
+
+make_data<- function(case,Y){
+  ind_1<- 1:case[1]
+  ind_2<- (case[1]+1):case[2]
+  ind_3<- (case[2]+1):case[3]
+  ind_4<- (case[3]+1):case[4]
+  ind_5<- (case[4]+1):case[5]
+  
+  Y_4 = matrix(NA,nrow=I,ncol=6)
+  Y_4[ind_1,c(5:6)] = Y[ind_1,c(5:6)]
+  Y_4[ind_2,c(4:6)] = Y[ind_2,c(4:6)]
+  Y_4[ind_3,c(3:6)] = Y[ind_3,c(3:6)]
+  Y_4[ind_4,c(2:6)] = Y[ind_4,c(2:6)]
+  Y_4[ind_5,] = Y[ind_5,]
+  return(Y_4)
+  
+  # Y_4 = matrix(NA,nrow=I,ncol=5)
+  # Y_4[ind_1,5] = Y[ind_1,5]
+  # Y_4[ind_2,c(4:5)] = Y[ind_2,c(4:5)]
+  # Y_4[ind_3,c(3:5)] = Y[ind_3,c(3:5)]
+  # Y_4[ind_4,c(2:5)] = Y[ind_4,c(2:5)]
+  # Y_4[ind_5,c(1:5)] = Y[ind_5,c(1:5)]
+  # return(Y_4)
+}
+
+#################
+## 4-1) CASE A
+#################
+# Data 
+RMSE_NMC_A=matrix(0,nrow=2,ncol=1)
+B=1:2
+
+ptm.init <- proc.time()
+
+for(b in B){
+  # X
+  X = matrix(0,nrow=I,ncol=3)
+  for(i in 1:I){
+    X[i,1]<- 1
+    X[i,2]<- rbinom(1,1,0.5)
+    X[i,3]<- rbinom(1,1,0.5)
+  }
+  
+  # Lambda: time-invariant
+  Lamb = exp(X%*%param_beta)
+  
+  # R : AR(1), Y
+  R = matrix(0,nrow=I,ncol=7)
+  Y = matrix(0,nrow=I,ncol=6)
+  for(i in 1:I){
+    R[i,1] = rnorm(1, 0, sqrt(sig/(1-phi^2)))
+    for(t in 2:7){
+      R[i,t] = rnorm(1, phi*R[i,t-1], sqrt(sig))
+    }
+    Y[i,] = rpois(6,Lamb[i]*exp(R[i,c(2:7)]))
+  }
+  
+  Y_data = make_data(case_A,Y)
+  TT_N<- apply(!is.na(Y_data), 1, sum)
+  T1 <- matrix(nrow=nrow(Y_data), ncol=6)
+  for(i in 1:nrow(Y_data)){
+    ind <- which(!is.na(Y_data[i,]))
+    ind <- append(ind, rep(NA, 6-length(ind)))
+    T1[i,] <- ind
+  }
+  
+  
+  # data list
+  dataList=list(Y=Y_data,TT_N=TT_N,T1=T1,I=I,sig=sig,phi=phi,X=X,beta=param_beta)
+  
+  modelString="model {
+
+  ######## Prior ########
+  for(i in 1:I){
+      R[i,1] ~ dnorm(0, (1-phi^2)/sig)
+      for(t in 2:7){ # R_{0}, ..., R_{6}
+          R[i,t] ~ dnorm(phi*R[i,t-1], 1/sig)
+      }
+      R6[i] = exp(R[i,7])
+  }
+
+ ######## Y ########
+  for(i in 1:I){ #I: number of people
+      for(t in 1:(TT_N[i])){ 
+          mu_N[i,T1[i,t]] = exp( inprod(X[i,],beta[]) + R[i,T1[i,t]+1] )
+          Y[i,T1[i,t]] ~ dpois( mu_N[i,T1[i,t]] )
+      }
+    }
+  }
+  "
+  writeLines(modelString, "model_reg_4.txt")
+  
+  nChains=1 # K=100
+  jagsModel = jags.model(file="model_reg_4.txt", data=dataList, n.chains=1, n.adapt=500)
+  update(jagsModel, n.iter=1000)
+  codaSamples = coda.samples(jagsModel, variable.names=c("R6"), n.iter=1000)
+  exp_R6 = colMeans(codaSamples[[1]])
+  prem = Lamb*exp_R6
+  RMSE_NMC_A[b] = sqrt(mean((prem-Y[,6])^2))
+  print(paste0("=== iteration : ",b," ==="))
+  print(RMSE_NMC_A[b])
+}
+
+```
+
+
+
+```{r}
+#################
+## 4-1) CASE B
+#################
+# Data 
+RMSE_NMC_B=matrix(0,nrow=2,ncol=1)
+B=1:2
+
+ptm.init <- proc.time()
+
+for(b in B){
+  # X
+  X = matrix(0,nrow=I,ncol=3)
+  for(i in 1:I){
+    X[i,1]<- 1
+    X[i,2]<- rbinom(1,1,0.5)
+    X[i,3]<- rbinom(1,1,0.5)
+  }
+  
+  # Lambda: time-invariant
+  Lamb = exp(X%*%param_beta)
+  
+  # R : AR(1), Y
+  R = matrix(0,nrow=I,ncol=7)
+  Y = matrix(0,nrow=I,ncol=6)
+  for(i in 1:I){
+    R[i,1] = rnorm(1, 0, sqrt(sig/(1-phi^2)))
+    for(t in 2:7){
+      R[i,t] = rnorm(1, phi*R[i,t-1], sqrt(sig))
+    }
+    Y[i,] = rpois(6,Lamb[i]*exp(R[i,c(2:7)]))
+  }
+  
+  Y_data = make_data(case_B,Y)
+  TT_N<- apply(!is.na(Y_data), 1, sum)
+  T1 <- matrix(nrow=nrow(Y_data), ncol=6)
+  for(i in 1:nrow(Y_data)){
+    ind <- which(!is.na(Y_data[i,]))
+    ind <- append(ind, rep(NA, 6-length(ind)))
+    T1[i,] <- ind
+  }
+  
+  
+  # data list
+  dataList=list(Y=Y_data,TT_N=TT_N,T1=T1,I=I,sig=sig,phi=phi,X=X,beta=param_beta)
+  
+  modelString="model {
+
+  ######## Prior ########
+  for(i in 1:I){
+      R[i,1] ~ dnorm(0, (1-phi^2)/sig)
+      for(t in 2:7){ # R_{0}, ..., R_{6}
+          R[i,t] ~ dnorm(phi*R[i,t-1], 1/sig)
+      }
+      R6[i] = exp(R[i,7])
+  }
+
+ ######## Y ########
+  for(i in 1:I){ #I: number of people
+      for(t in 1:(TT_N[i])){ 
+          mu_N[i,T1[i,t]] = exp( inprod(X[i,],beta[]) + R[i,T1[i,t]+1] )
+          Y[i,T1[i,t]] ~ dpois( mu_N[i,T1[i,t]] )
+      }
+    }
+  }
+  "
+  writeLines(modelString, "model_reg_4.txt")
+  
+  nChains=1 # K=100
+  jagsModel = jags.model(file="model_reg_4.txt", data=dataList, n.chains=1, n.adapt=500)
+  update(jagsModel, n.iter=1000)
+  codaSamples = coda.samples(jagsModel, variable.names=c("R6"), n.iter=1000)
+  exp_R6 = colMeans(codaSamples[[1]])
+  prem = Lamb*exp_R6
+  RMSE_NMC_B[b] = sqrt(mean((prem-Y[,6])^2))
+  print(paste0("=== iteration : ",b," ==="))
+  print(RMSE_NMC_B[b])
+}
+
+```
+
+```{r}
+#################
+## 4-1) CASE C
+#################
+# Data 
+RMSE_NMC_C=matrix(0,nrow=2,ncol=1)
+B=1:2
+
+ptm.init <- proc.time()
+
+for(b in B){
+  # X
+  X = matrix(0,nrow=I,ncol=3)
+  for(i in 1:I){
+    X[i,1]<- 1
+    X[i,2]<- rbinom(1,1,0.5)
+    X[i,3]<- rbinom(1,1,0.5)
+  }
+  
+  # Lambda: time-invariant
+  Lamb = exp(X%*%param_beta)
+  
+  # R : AR(1), Y
+  R = matrix(0,nrow=I,ncol=7)
+  Y = matrix(0,nrow=I,ncol=6)
+  for(i in 1:I){
+    R[i,1] = rnorm(1, 0, sqrt(sig/(1-phi^2)))
+    for(t in 2:7){
+      R[i,t] = rnorm(1, phi*R[i,t-1], sqrt(sig))
+    }
+    Y[i,] = rpois(6,Lamb[i]*exp(R[i,c(2:7)]))
+  }
+  
+  Y_data = make_data(case_C,Y)
+  TT_N<- apply(!is.na(Y_data), 1, sum)
+  T1 <- matrix(nrow=nrow(Y_data), ncol=6)
+  for(i in 1:nrow(Y_data)){
+    ind <- which(!is.na(Y_data[i,]))
+    ind <- append(ind, rep(NA, 6-length(ind)))
+    T1[i,] <- ind
+  }
+  
+  
+  # data list
+  dataList=list(Y=Y_data,TT_N=TT_N,T1=T1,I=I,sig=sig,phi=phi,X=X,beta=param_beta)
+  
+  modelString="model {
+
+  ######## Prior ########
+  for(i in 1:I){
+      R[i,1] ~ dnorm(0, (1-phi^2)/sig)
+      for(t in 2:7){ # R_{0}, ..., R_{6}
+          R[i,t] ~ dnorm(phi*R[i,t-1], 1/sig)
+      }
+      R6[i] = exp(R[i,7])
+  }
+
+ ######## Y ########
+  for(i in 1:I){ #I: number of people
+      for(t in 1:(TT_N[i])){ 
+          mu_N[i,T1[i,t]] = exp( inprod(X[i,],beta[]) + R[i,T1[i,t]+1] )
+          Y[i,T1[i,t]] ~ dpois( mu_N[i,T1[i,t]] )
+      }
+    }
+  }
+  "
+  writeLines(modelString, "model_reg_4.txt")
+  
+  nChains=1 # K=100
+  jagsModel = jags.model(file="model_reg_4.txt", data=dataList, n.chains=1, n.adapt=500)
+  update(jagsModel, n.iter=1000)
+  codaSamples = coda.samples(jagsModel, variable.names=c("R6"), n.iter=1000)
+  exp_R6 = colMeans(codaSamples[[1]])
+  prem = Lamb*exp_R6
+  RMSE_NMC_C[b] = sqrt(mean((prem-Y[,6])^2))
+  print(paste0("=== iteration : ",b," ==="))
+  print(RMSE_NMC_C[b])}
+```
+
