@@ -1,11 +1,4 @@
----
-title: "hw3"
-author: "202STG01 고유정"
-date: '2021 3 29 '
-output:
-  word_document: default
-  html_document:
-    df_print: paged
+
 ---
 
 ```{r setup, include=FALSE}
