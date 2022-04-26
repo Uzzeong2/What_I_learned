@@ -1,12 +1,3 @@
----
-title: "hw4_timeseries"
-author: "202STG01 고유정"
-date: '2020 11 8 '
-output:
-  word_document: default
-  html_document: default
----
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
