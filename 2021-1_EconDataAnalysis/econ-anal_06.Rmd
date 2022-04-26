@@ -1,0 +1,98 @@
+---
+title: "경제자료분석 HW6"
+author: "202STG01 고유정"
+date: '2021 5 30 '
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+## 경자분 HW6 ##
+
+library(forecast);library(fUnitRoots)
+#install.packages("urca")
+library(urca)
+data = read.csv("VIX_VKOSPI_2008.csv", header=T); attach(data)
+vix = data$VIX
+vkospi = data$VKOSPI
+
+# AIC/BIC order 
+aic_vix=c();aic_vkospi=c()
+for (p in 1:10){
+  ar.fit_vix=Arima(vix, order=c(p,0,0))
+  ar.fit_vkospi=Arima(vkospi, order=c(p,0,0))
+  aic_vix[p]=ar.fit_vix$aic
+  aic_vkospi[p]=ar.fit_vkospi$aic
+  }
+plot(aic_vix) # 최솟값 위치 aic.order = 8 
+which.min(aic_vix)
+plot(aic_vkospi) # 최솟값 위치 aic.order = 10
+which.min(aic_vkospi)
+
+# ================== 1 ================
+# 단위근 검정 ADF & p-value 
+#### H0 : delta=0; H1 : delta<0
+adfTest(vix, type="c", lags=7)
+adfTest(vkospi, type="c", lags=9)
+
+# ================== 2&3 ================
+library(mvtnorm)
+dat = data.frame(vix, vkospi)
+johanson.test = ca.jo(dat, type='eigen', ecdet="const")
+summary(johanson.test)
+
+# ================== 4 ================
+library(tsDyn);bic=c()
+for (p in 1:10){
+  vecm.fit=VECM(dat, lag=p, r=1, estim="ML", include="const")
+  bic[p]=summary(vecm.fit)$bic}
+plot(bic) # BIC order = 3 최소값 위치하니까
+which.min(bic) 
+
+vecm.fit=VECM(dat, lag=2, r=1, estim="ML", include="const")
+summary(vecm.fit)
+beta = matrix(c(1, -0.9346826), nrow=2)
+alpha = c(-0.0250, 0.0993)
+pi = alpha %*% beta # dY_t = pi*Y_t-1
+A = c(0.0239, -0.1324)
+
+# ================== 5 ================
+z=c()
+for (t in 2:1690){
+  z[t-1] = beta[1]*vkospi[t-1] + beta[2]*vix[t-1]
+  d.vkospi=vkospi[2:t]-vkospi[1:(t-1)]
+  d.vix=vix[2:t]-vix[1:(t-1)]}
+library(vars);library(aod);library(zoo);library(tseries)
+library(lmtest); library(sandwich)
+library(dynamac);library(tidyverse);library(tseries);library(TSstudio)
+
+grangertest(d.vkospi ~ z, order = 2, data = dat)
+grangertest(z ~ d.vkospi, order = 2, data = dat)
+ # both granger cause
+
+grangertest(z ~ vix, order = 2, data = dat)
+grangertest(vix ~ z, order = 2, data = dat)
+ # both granger cause
+ 
+
+# ================== 6 ================
+grangertest(d.vkospi ~ d.vix, order = 2, data = dat)
+grangertest(d.vix ~ d.vkospi, order = 2, data = dat)
+# both granger cause
+
+# ================== 7 마지막 n.ahead =5 추정 ================ 
+vecm.hat = predict(vecm.fit, n.ahead=5)
+vecm.hat
+
+
+```
+
