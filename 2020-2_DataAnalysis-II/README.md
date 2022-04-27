@@ -27,8 +27,8 @@
 ### Presentation 
 | Date | Topic | PPT | Report | Code |
 | :--- | :--- | :---: | :---: | :---: | 
-| Dec 9, 2020 | Machine Learning : Mushroom Classification | [📌](https://drive.google.com/file/d/1o9EoRp6g_-nQYinotD3VA9CwVTPC6s8-/view?usp=sharing) | [📑](https://drive.google.com/file/d/15d36PxfG_GA_Le3FVqCTsfNbzYpWW6eO/view?usp=sharing) | [✔️](https://github.com/jbeen2/Today-I-Learned/blob/main/2020-2-DataAnalysis-II/1209_ML.ipynb) |
-| Dec 9, 2020 | Deep Learning : Garbage Classification | [📌](https://drive.google.com/file/d/1o9EoRp6g_-nQYinotD3VA9CwVTPC6s8-/view?usp=sharing) | [📑](https://drive.google.com/file/d/15d36PxfG_GA_Le3FVqCTsfNbzYpWW6eO/view?usp=sharing) | [✔️](https://github.com/jbeen2/Today-I-Learned/blob/main/2020-2-DataAnalysis-II/1209_CNN.ipynb) |
+| Dec 9, 2020 | Machine Learning : Mushroom Classification | [📌](https://github.com/tingting919/What_I_learned/blob/main/2020-2_DataAnalysis-II/data-anal_Final-PPT.pdf) | [📑](https://github.com/tingting919/What_I_learned/blob/main/2020-2_DataAnalysis-II/data-anal_Final-Report.pdf) | [code1](https://github.com/tingting919/What_I_learned/blob/main/2020-2_DataAnalysis-II/data-anal_Mushroom-1.ipynb) [code2](https://github.com/tingting919/What_I_learned/blob/main/2020-2_DataAnalysis-II/data-anal_Mushroom-2.ipynb) |
+| Dec 9, 2020 | Deep Learning : Garbage Classification | [📌](https://github.com/tingting919/What_I_learned/blob/main/2020-2_DataAnalysis-II/data-anal_Final-PPT.pdf) | [📑](https://github.com/tingting919/What_I_learned/blob/main/2020-2_DataAnalysis-II/data-anal_Final-Report.pdf) | [code](https://github.com/jbeen2/Today-I-Learned/blob/main/2020-2-DataAnalysis-II/1209_CNN.ipynb) |
 
 
 <br> 
