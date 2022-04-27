@@ -1,0 +1,197 @@
+---
+title: "이통2HW2_part2"
+author: "고유정"
+date: "2020-09-14"
+output: 
+  word_document: default
+  latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+
+
+# 1. 2010 아파트 화재 피해액(X)를 나타내는 5개 분포에 대한 QQplot
+
+library(logging);library(tidyverse); library(gridExtra);library(rmutil) ; library(numDeriv);
+library(ggplot2)
+
+data1 <- read.csv('아파트.csv', sep=",", header=T, encoding="UTF-8")
+colnames(data1) <- c("scale", "damage_price", "number")
+apt <- data1[!(data1$damage_price == 0),]
+
+## lognormal
+
+apt$r = rank(apt$damage_price)
+qqplot = function(q, x_r, title){
+  ggplot(data.frame(q, x_r), aes(q, x_r)) +    geom_point(size=3, color='darkblue') +
+    stat_smooth(method='lm', color='orange', size=2) + ggtitle(title, paste('Adj R squared =', round(summary(lm(x_r~q))$adj.r.squared,4))) + 
+    theme(plot.title=element_text(family = "serif", face = "bold", hjust = 0.5, size = 15, color = "black"))+
+    xlab('ginv') + ylab('log_amount')
+}
+
+qlnorm = qnorm(apt$r/ (15+1))
+log_amount = log(apt$damage_price)
+lognormalqq = qqplot(qlnorm, log_amount, 'Log Normal')
+lognormalqq
+
+
+## pareto
+
+title_list = paste0('Pareto; alpha=', seq(1,1000))
+
+paretofn = function(alpha){
+  qpar = log((1-(apt$r/(15+1)))^(-1/alpha)-1)
+  log_amount= log(apt$damage_price)
+  qqplot(qpar, log_amount, title_list[alpha])
+}
+
+grid.arrange(paretofn(1),paretofn(2), paretofn(3), paretofn(4), nrow=2)
+
+alpha = 1
+qpar = log((1-(apt$r/(15+1)))^(-1/alpha)-1)
+log_amount= log(apt$damage_price)
+paretoqq = paretofn(alpha)
+paretoqq
+
+
+## Weibull distribution
+qwei = log(-log(1-apt$r/(15+1)))
+log_amount= log(apt$damage_price)
+weibullqq = qqplot(qwei, log_amount, 'Weibull')
+weibullqq
+
+## inverse weibull distribution
+qinvwei = -log(-log(apt$r/(15+1)))
+invweiqq = qqplot(qinvwei, log_amount, 'Inverse Weibull')
+invweiqq
+
+## log logistic
+qllog = log(apt$r/(15+1-apt$r))
+llogqq = qqplot(qllog, log_amount, 'Log Logistic')
+llogqq
+
+grid.arrange(lognormalqq, paretoqq, weibullqq, invweiqq, llogqq)
+
+
+# 2. Q-Q plot 을 근거로 피해금액의 가장 적절한 확률분포 2개를 찾아보시오.
+
+
+## Inverse Weibull
+
+lminvwei = lm(log_amount~qinvwei)
+mu_invwei = lminvwei$coefficients[[1]] 
+sig_invwei = lminvwei$coefficients[[2]]
+mu_invwei;sig_invwei
+
+## Pareto
+lmpareto = lm(log_amount~qpar)
+mu_pareto = lmpareto$coefficients[[1]]
+sig_pareto = lmpareto$coefficients[[2]]
+mu_pareto;sig_pareto
+
+## Log Logistic
+lmllog = lm(log_amount~qllog)
+mu_llog = lmllog$coefficients[[1]] 
+sig_llog = lmllog$coefficients[[2]]
+mu_llog;sig_llog
+
+
+#3. 위에서 선택된 2가지 최적모형을 이용하여 적정 보험료를 각각 계산하고 차이를 서로 비교해 보시오
+
+A = c(0, 1000000, 5000000) 
+B = c(10000000, 20000000, 50000000, 100000000, 200000000)
+t = 5351 #2010 계약건수
+
+## inverse weibull
+tau = 1  
+c = exp(-mu_invwei / sig_invwei)
+
+EY_inv = matrix(0, nrow=length(A), ncol=length(B))
+z = rnorm(1000000,0,1)
+x=y=c()
+for (a in 1:3){
+  for (b in 1:5){
+    for (i in 1:1000000){
+      x[i] = exp(mu_invwei + sig_invwei*z[i])
+      y[i] = min(max(x[i]-A[a],0),B[b])
+    }
+    EY_inv[a,b] = sum(y)/1000000
+  }
+}
+EY_inv = as.data.frame(EY_inv, row.names=c('0','100만','500만'))
+colnames(EY_inv)<-c('1000만','2000만','5000만','1억','2억')
+EY_inv = EY_inv * sum(apt$number) / t  
+EY_inv
+
+## Pareto
+alpha_Par = 1 
+lamda_Par = exp(mu_pareto)
+
+EY_par = matrix(0, nrow=length(A), ncol=length(B))
+z = rnorm(1000000,0,1) 
+for (a in 1:3){
+  for (b in 1:5){
+    for (i in 1:1000000){
+      x[i] = exp(mu_pareto + sig_pareto*z[i])
+      y[i] = min(max(x[i]-A[a],0),B[b])
+    }
+    EY_par[a,b] = sum(y)/1000000
+  }
+}
+EY_par = as.data.frame(EY_par, row.names=c('0','100만','500만'))
+colnames(EY_par)<-c('1000만','2000만','5000만','1억','2억')
+EY_par = EY_par * sum(apt$number) / t  
+EY_par
+
+## log logistic
+alpha_llog = 1 / sig_llog
+lamda_llog = exp(-mu_llog)
+
+EY_llog = matrix(0, nrow=length(A), ncol=length(B))
+z = rnorm(1000000,0,1) 
+for (a in 1:3){
+  for (b in 1:5){
+    for (i in 1:1000000){
+      x[i] = exp(mu_llog + sig_llog*z[i])
+      y[i] = min(max(x[i]-A[a],0),B[b])
+    }
+    EY_llog[a,b] = sum(y)/1000000
+  }
+}
+EY_llog = as.data.frame(EY_llog, row.names=c('0','100만','500만'))
+colnames(EY_llog)<-c('1000만','2000만','5000만','1억','2억')
+EY_llog = EY_llog * sum(apt$number) / t  
+EY_llog
+
+# 4. 자기부담금이 없고 보상한도가 없는 보험의 적정보험료를 아래 2 가지 계산
+
+## a)
+
+t = 5351 # 2010 계약건수
+EN = sum(apt$number) / t 
+mu_w = EN * sum(apt$damage_price) / sum(apt$number)
+var_w = EN*(1-EN)*mu_w^2 + EN*var(apt$damage_price)
+mu_w + 1.645*sqrt(var_w)/sqrt(t)
+
+
+## b)
+
+insurance = 1883508000 / 5777  # 2010년 아파트 총피해액 / 2010 계약건수
+insurance
+
+
+```
+
