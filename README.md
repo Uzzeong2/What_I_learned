@@ -4,39 +4,38 @@
 <br> 
 
 ## 1학기 @2020-1
-|Class|Lecture|Link|
-|:-|:-|:-|
-|G11805|확률론 I|[📂 2020-1-ProbTheory](https://github.com/jbeen2/Today-I-Learned/tree/main/2020-1-ProbTheory)|
-|G11806|이론통계학 I|[📂 2020-1-TheoryStat-I](https://github.com/jbeen2/Today-I-Learned/tree/main/2020-1-TheoryStat-I)|
-|G11807|회귀분석론||
+|Lecture|Link|
+|:-|:-|
+|확률론 I|[📂 Prob-Theory](https://github.com/Uzzeong2/What_I_learned/tree/main/Prob-Theory)|
+|이론통계학 I|[📂 Theo-Stat-I](https://github.com/Uzzeong2/What_I_learned/tree/main/Theo-Stat-I)|
+|회귀분석론|
 
 <br> 
 
 ## 2학기 @2020-2
-|Class|Lecture|Link|
-|:-|:-|:-|
-|G11874|시계열분석|[📂 2020-2-TimeSeries](https://github.com/jbeen2/Today-I-Learned/tree/main/2020-2-TimeSeries)|
-|G11876|베이지안통계|[📂 2020-2-Bayesian](https://github.com/jbeen2/Today-I-Learned/tree/main/2020-2-Bayesian)|
-|G11906|자료분석특론 II|[📂 2020-2-DataAnalysis-II](https://github.com/jbeen2/Today-I-Learned/tree/main/2020-2-DataAnalysis-II)|
-|G14523|인공지능특론|[📂 2020-2-NLP](https://github.com/jbeen2/Today-I-Learned/tree/main/2020-2-NLP)|
+Lecture|Link|
+|:-|:-|
+|시계열분석|[📂 2020-2_TimeSeries](https://github.com/Uzzeong2/What_I_learned/tree/main/2020-2_TimeSeries)|
+|이론통계학 II|[📂 2020-2_Theo-Stat-II](https://github.com/Uzzeong2/What_I_learned/tree/main/2020-2_Theo-Stat-II)|
+|자료분석특론 II|[📂 2020-2_DataAnalysis-II](https://github.com/Uzzeong2/What_I_learned/tree/main/2020-2_DataAnalysis-II)|
 
 
 <br> 
 
 ## 3학기 @2021-1
-|Class|Lecture|Link|
-|:-|:-|:-|
-|G11825|자료분석특론 I|[📂 2021-1-FunctionalDataAnalysis](https://github.com/jbeen2/Today-I-Learned/tree/main/2021-1-FunctionalDataAnalysis)|
-|G11830|베이지안통계특론 I|[📂 2021-1-BayesianStatistics](https://github.com/jbeen2/Today-I-Learned/tree/main/2021-1-BayesianStatistics)|
-|G11834|고급선형모형론|[📂 2021-1-AdvancedLinearModels](https://github.com/jbeen2/Today-I-Learned/tree/main/2021-1-AdvancedLinearModels)|
+|Lecture|Link|
+|:-|:-|
+|금융위험관리|[📂 2021-1_FinancialRiskManagement](https://github.com/Uzzeong2/What_I_learned/tree/main/2021-1_FinancialRiskManagement)|
+|베이지안통계특론 I|[📂 2021-1_BayesianStatistics](https://github.com/Uzzeong2/What_I_learned/tree/main/2021-1_BayesianStatistics)|
+|경제자료분석|[📂 2021-1_EconDataAnalysis](https://github.com/Uzzeong2/What_I_learned/tree/main/2021-1_EconDataAnalysis)|
 
 <br> 
 
 ## Seminar
-|Term|Topic|Link|
-|:-|:-|:-|
-|'20.09 ~ '20.12|Causal Inference|[📂 2020-2-CausalInference](https://github.com/jbeen2/Today-I-Learned/tree/main/2020-2-CausalInference)|
-|'21.01 ~ '21.02|Machine Learning|[📂 2021-1-MLseminar](https://github.com/jbeen2/Today-I-Learned/tree/main/2021-1-MLseminar)|
+|Topic|Link|
+|:-|:-|
+|Copula & Pytorch|[📂 Copula & Pytorch seminar](https://github.com/Uzzeong2/What_I_learned/tree/main/Copula%26Pytorch_seminar)|
+
 
 <br> 
 
