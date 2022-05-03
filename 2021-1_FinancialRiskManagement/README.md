@@ -1,4 +1,4 @@
-# Financial Risk Management
+# Quantitative Risk Management
 ### 2021 1학기, 금융위험관리
 
 <br>
