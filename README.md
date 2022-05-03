@@ -25,7 +25,7 @@ Lecture|Link|
 ## 3학기 @2021-1
 |Lecture|Link|
 |:-|:-|
-|금융위험관리|[📂 2021-1_FinancialRiskManagement](https://github.com/Uzzeong2/What_I_learned/tree/main/2021-1_FinancialRiskManagement)|
+|금융위험관리|[📂 2021-1_QuantitativeRiskManagement](https://github.com/Uzzeong2/What_I_learned/tree/main/2021-1_FinancialRiskManagement)|
 |베이지안통계특론 I|[📂 2021-1_BayesianStatistics](https://github.com/Uzzeong2/What_I_learned/tree/main/2021-1_BayesianStatistics)|
 |경제자료분석|[📂 2021-1_EconDataAnalysis](https://github.com/Uzzeong2/What_I_learned/tree/main/2021-1_EconDataAnalysis)|
 
