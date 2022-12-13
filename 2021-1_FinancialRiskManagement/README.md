@@ -20,5 +20,5 @@
 |week12|Predictive Analysis with LSMC accelerated by RNN and DNN|
 |week13|Auto Encoder and Generative adversarial network|
 |week14|Forecasting of insurance premium by replicated data|
-|week15|Final Project|[final-project](https://github.com/Uzzeong2/What_I_learned/blob/main/2021-1_FinancialRiskManagement/RM_Final.Rmd) <br> [final-report](https://github.com/Uzzeong2/What_I_learned/blob/main/2021-1_FinancialRiskManagement/RM_Final_report.pdf)
+|week15|Final Project|[final-code](https://github.com/Uzzeong2/What_I_learned/blob/main/2021-1_FinancialRiskManagement/RM_Final_code.pdf) <br> [final-report](https://github.com/Uzzeong2/What_I_learned/blob/main/2021-1_FinancialRiskManagement/RM_Final_report.pdf)
 
